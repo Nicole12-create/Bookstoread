@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Book Website</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            padding: 2rem;
+            background-color: #444;
+            color: white;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 3rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .login-form, .register-form {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-form input, .register-form input {
+            padding: 10px;
+            margin: 5px;
+            width: 80%;
+        }
+        .login-form button, .register-form button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+        .book-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .book-item {
+            text-align: center;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #fafafa;
+        }
+        .book-item:hover {
+            background-color: #eaeaea;
+        }
+        .chapter-list {
+            margin-top: 1rem;
+            list-style-type: none;
+            padding: 0;
+        }
+        .chapter-list li {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+        .chapter-list li:hover {
+            background-color: #f4f4f4;
+        }
+        .chapter-content {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .theme-toggle {
+            margin-top: 1rem;
+            text-align: right;
+        }
+        .theme-toggle button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            background-color: #444;
+            color: white;
+            cursor: pointer;
+        }
+        .theme-toggle button:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Nicole Coldwell</h1>
+        <p>Brace Yourself and Step Into My Realm</p>
+    </header>
+    <div class="container">
+        <div class="login-form">
+            <h3>Login</h3>
+            <input type="text" id="username" placeholder="Username" />
+            <input type="password" id="password" placeholder="Password" />
+            <button id="loginBtn">Login</button>
+        </div>
+        <div class="register-form">
+            <h3>Create an Account</h3>
+            <input type="text" id="newUsername" placeholder="Enter your username" />
+            <input type="password" id="newPassword" placeholder="Enter your password" />
+            <button id="registerBtn">Register</button>
+        </div>
+        <div class="book-list" id="bookList" style="display: none;"></div>
+        <ul class="chapter-list" id="chapterList" style="display: none;"></ul>
+        <div class="chapter-content" id="chapterContent" style="display: none;">
+            <div class="theme-toggle">
+                <button id="themeToggle">Switch to Black Background</button>
+            </div>
+            <div id="contentText"></div>
+        </div>
+    </div>
+    <script>
+        const adminUsername = "bettyswift";
+        const adminPassword = "coldwell2002";
+        let currentTheme = "white";
+
+        const booksCSV = "C:/Users/Nicol/Desktop/my-book-website/books.csv";
+        const chaptersCSV = "C:/Users/Nicol/Desktop/my-book-website/chapters.csv";
+
+        const users = {};
+
+        document.getElementById("registerBtn").addEventListener("click", () => {
+            const username = document.getElementById("newUsername").value.trim();
+            const password = document.getElementById("newPassword").value.trim();
+            if (username && password) {
+                users[username] = password;
+                alert("Account created successfully!");
+            } else {
+                alert("Please fill in all fields.");
+            }
+        });
+
+        document.getElementById("loginBtn").addEventListener("click", () => {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (username === adminUsername && password === adminPassword) {
+                alert("Welcome, Admin!");
+                loadBooks();
+            } else if (users[username] && users[username] === password) {
+                alert(`Welcome, ${username}!`);
+                loadBooks();
+            } else {
+                alert("Invalid login credentials.");
+            }
+        });
+
+        function loadBooks() {
+            Papa.parse(books.csv, {
+                download: true,
+                header: true,
+                complete: (results) => {
+                    const books = results.data;
+                    const bookListContainer = document.getElementById("bookList");
+                    bookListContainer.style.display = "grid";
+                    bookListContainer.innerHTML = "";
+
+                    books.forEach((book) => {
+                        const bookItem = document.createElement("div");
+                        bookItem.classList.add("book-item");
+                        bookItem.textContent = book["Book Title"];
+                        bookItem.addEventListener("click", () => loadChapters(book["Book ID"]));
+                        bookListContainer.appendChild(bookItem);
+                    });
+                },
+                error: (err) => console.error("Error loading books:", err),
+            });
+        }
+
+        function loadChapters(bookId) {
+            Papa.parse(chapters.csv, {
+                download: true,
+                header: true,
+                complete: (results) => {
+                    const chapters = results.data.filter((chapter) => chapter["Book ID"] === bookId);
+                    const chapterList = document.getElementById("chapterList");
+                    chapterList.style.display = "block";
+                    chapterList.innerHTML = "";
+
+                    chapters.forEach((chapter) => {
+                        const chapterItem = document.createElement("li");
+                        chapterItem.textContent = chapter["Chapter Title"];
+                        chapterItem.addEventListener("click", () => displayChapterContent(chapter["Content"]));
+                        chapterList.appendChild(chapterItem);
+                    });
+                },
+                error: (err) => console.error("Error loading chapters:", err),
+            });
+        }
+
+        function displayChapterContent(content) {
+            const chapterContentDiv = document.getElementById("chapterContent");
+            const contentText = document.getElementById("contentText");
+            chapterContentDiv.style.display = "block";
+            contentText.textContent = content;
+        }
+
+        document.getElementById("themeToggle").addEventListener("click", () => {
+            const chapterContentDiv = document.getElementById("chapterContent");
+            currentTheme = currentTheme === "white" ? "black" : "white";
+            chapterContentDiv.style.backgroundColor = currentTheme === "white" ? "#fff" : "#000";
+            chapterContentDiv.style.color = currentTheme === "white" ? "#000" : "#fff";
+            document.getElementById("themeToggle").textContent =
+                currentTheme === "white" ? "Switch to Black Background" : "Switch to White Background";
+        });
+    </script>
+</body>
+</html>
